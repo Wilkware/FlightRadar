@@ -1,0 +1,12 @@
+{
+    "id": "{CFDDA9E7-F95E-68F1-8432-9E2796E5C8F8}",
+    "name": "Flight Radar",
+    "author": "Wilkware (@Pitti)",
+    "url": "https://wilkware.de",
+    "compatibility": {
+        "version": "8.1"
+    },
+    "version": "1.0",
+    "build": 20260110,
+    "date": 1768048974
+}

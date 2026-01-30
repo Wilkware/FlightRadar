@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="de">
+
+<head>
+    <title>Flight Radar</title>
+    <meta charset="UTF-8" />
+    <style>
+        /* Hier kann ich den margin vom Body überschreibe oder die background-color setzen usw. */
+        /* Die Root-Variablen --accent-color, --coontent-color und --card-color sind immer vordefiniert. */
+        /* Kann aber auch eigene Variablen definieren. Gute Technik um nicht direkt das CSS zu manipulieren zu müssen */
+
+        :root {
+            --status-green: #58A906;
+            --status-yellow: #FFC107;
+            --status-red: #F35A2C;
+        }
+
+        html,
+        body {
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .flight-carousel {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .nav-indicators {
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: color-mix(in srgb, var(--content-color) 20%, transparent);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .nav-indicator:hover {
+            background: color-mix(in srgb, var(--content-color) 40%, transparent);
+        }
+
+        .nav-indicator.active {
+            background: var(--accent-color);
+            transform: scale(1.2);
+        }
+
+        .flight-carousel-wrapper {
+            display: flex;
+            transition: transform 0.4s ease-in-out;
+            height: 100%;
+        }
+
+        .flight-carousel-slide {
+            min-width: 100%;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: var(--content-color);
+            font-size: 14px;
+            width: 25px;
+            height: 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 100;
+            user-select: none;
+        }
+
+        .nav-button.prev {
+            left: -3px;
+        }
+
+        .nav-button.next {
+            right: -3px;
+        }
+
+        .flight-card {
+            padding: 20px;
+        }
+
+        .flight-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .flight-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--accent-color);
+            line-height: 1.2;
+        }
+
+        .flight-callsign {
+            font-size: 14px;
+            color: var(--content-color);
+            font-weight: normal;
+            margin-top: 2px;
+        }
+
+        .flight-status {
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .flight-status.green {
+            background: var(--status-green);
+        }
+
+        .flight-status.yellow {
+            background: var(--status-yellow);
+        }
+
+        .flight-status.red {
+            background: var(--status-red);
+        }
+
+        .flight-route {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 18px;
+            color: var(--content-color);
+            margin: 15px 0;
+            font-weight: 500;
+            justify-content: center;
+        }
+
+        .flight-arrow {
+            fill: var(--content-color);
+            margin: 0 8px;
+            width: 24px;
+            height: 24px;
+        }
+
+        .flight-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .flight-detail {
+            background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .flight-detail-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 4px;
+            /* opacity: 0.6; */
+            color: var(--accent-color);
+        }
+
+        .flight-detail-value {
+            font-size: 16px;
+            color: var(--content-color);
+            font-weight: 400;
+        }
+
+        .flight-schedule {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .schedule-box {
+            background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+            padding: 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .schedule-box.arrival {
+            flex-direction: row-reverse;
+        }
+
+        .schedule-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .schedule-icon svg {
+            width: 100%;
+            height: 100%;
+            fill: var(--content-color);
+        }
+
+        .schedule-times {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+        }
+
+        .schedule-box.arrival .schedule-times {
+            text-align: right;
+        }
+
+        .schedule-box.arrival .schedule-time {
+            flex-direction: row-reverse;
+        }
+
+        .schedule-time {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .schedule-time-label {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            /* opacity: 0.6; */
+            color: var(--accent-color);
+        }
+
+        .schedule-time-value {
+            font-family: monospace;
+            color: var(--content-color);
+            font-weight: 400;
+            font-size: 13px;
+        }
+
+        .schedule-time-value.green {
+            color: var(--status-green);
+        }
+
+        .schedule-time-value.yellow {
+            color: var(--status-yellow);
+        }
+
+        .schedule-time-value.red {
+            color: var(--status-red);
+        }
+
+        .flight-airline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--accent-color);
+        }
+
+        .airline-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .airline-logo {
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--accent-color);
+            overflow: hidden;
+        }
+
+        .airline-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .airline-info {
+            flex: 1;
+        }
+
+        .airline-name {
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .aircraft-type {
+            font-size: 12px;
+            margin-top: 2px;
+            opacity: 0.5;
+        }
+
+        .aircraft-image {
+            height: 64px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .aircraft-image-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="flight-carousel">
+        <div class="nav-indicators" id="nav-indicators"></div>
+        <button class="nav-button prev" onclick="prevCard()">‹</button>
+        <button class="nav-button next" onclick="nextCard()">›</button>
+        <div class="flight-carousel-wrapper" id="flightCarouselWrapper">
+            <!-- Flight # -->
+            <div class="flight-carousel-slide">
+                <div class="flight-card">
+                    <div class="flight-header">
+                        <div>
+                            <div class="flight-number">N/A</div>
+                            <div class="flight-callsign">--</div>
+                        </div>
+                        <div class="flight-status green">N/A</div>
+                    </div>
+                    <div class="flight-route">
+                        N/A
+                        <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" class="flight-arrow">
+                            <path
+                                d="m 6.496094 1 c -0.792969 0 -0.78125 0.035156 -0.53125 1.03125 l 1.625 4.96875 h -4.5 l -1.21875 -1.78125 c -0.140625 -0.207031 -0.121094 -0.21875 -0.34375 -0.21875 h -0.21875 c -0.425782 0 -0.28125 0.4375 -0.28125 0.4375 l 0.28125 2.5625 l -0.28125 2.5625 s -0.140625 0.4375 0.25 0.4375 h 0.25 c 0.210937 0 0.203125 -0.007812 0.34375 -0.21875 l 1.21875 -1.78125 h 4.5 l -1.625 4.9375 c -0.261719 1.046875 -0.265625 1.0625 0.53125 1.0625 c 0.433594 0 0.433594 -0.011719 0.71875 -0.5 l 3.6875 -5.5 h 3.09375 c 0.554687 0 1 -0.445312 1 -1 s -0.445313 -1 -1 -1 h -3.09375 l -3.6875 -5.5 c -0.265625 -0.457031 -0.28125 -0.5 -0.65625 -0.5 z m 0 0">
+                            </path>
+                        </svg>
+                        N/A
+                    </div>
+                    <div class="flight-schedule">
+                        <div class="schedule-box">
+                            <div class="schedule-icon">
+                                <svg viewBox="0 -64 640 640" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M624 448H16c-8.84 0-16 7.16-16 16v32c0 8.84 7.16 16 16 16h608c8.84 0 16-7.16 16-16v-32c0-8.84-7.16-16-16-16zM80.55 341.27c6.28 6.84 15.1 10.72 24.33 10.71l130.54-.18a65.62 65.62 0 0 0 29.64-7.12l290.96-147.65c26.74-13.57 50.71-32.94 67.02-58.31 18.31-28.48 20.3-49.09 13.07-63.65-7.21-14.57-24.74-25.27-58.25-27.45-29.85-1.94-59.54 5.92-86.28 19.48l-98.51 49.99-218.7-82.06a17.799 17.799 0 0 0-18-1.11L90.62 67.29c-10.67 5.41-13.25 19.65-5.17 28.53l156.22 98.1-103.21 52.38-72.35-36.47a17.804 17.804 0 0 0-16.07.02L9.91 230.22c-10.44 5.3-13.19 19.12-5.57 28.08l76.21 82.97z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <div class="schedule-times">
+                                <div class="schedule-time">
+                                    <span class="schedule-time-label">Geplant</span>
+                                    <span class="schedule-time-value">&#8209;&#8209;:&#8209;&#8209;</span>
+                                </div>
+                                <div class="schedule-time">
+                                    <span class="schedule-time-label">Erwartet</span>
+                                    <span class="schedule-time-value ">&#8209;&#8209;:&#8209;&#8209;</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="schedule-box arrival">
+                            <div class="schedule-icon">
+                                <svg viewBox="0 -64 640 640" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M624 448H16c-8.84 0-16 7.16-16 16v32c0 8.84 7.16 16 16 16h608c8.84 0 16-7.16 16-16v-32c0-8.84-7.16-16-16-16zM44.81 205.66l88.74 80a62.607 62.607 0 0 0 25.47 13.93l287.6 78.35c26.48 7.21 54.56 8.72 81 1.36 29.67-8.27 43.44-21.21 47.25-35.71 3.83-14.5-1.73-32.71-23.37-54.96-19.28-19.82-44.35-32.79-70.83-40l-97.51-26.56L282.8 30.22c-1.51-5.81-5.95-10.35-11.66-11.91L206.05.58c-10.56-2.88-20.9 5.32-20.71 16.44l47.92 164.21-102.2-27.84-27.59-67.88c-1.93-4.89-6.01-8.57-11.02-9.93L52.72 64.75c-10.34-2.82-20.53 5-20.72 15.88l.23 101.78c.19 8.91 6.03 17.34 12.58 23.25z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <div class="schedule-times">
+                                <div class="schedule-time">
+                                    <span class="schedule-time-label">Geplant</span>
+                                    <span class="schedule-time-value">&#8209;&#8209;:&#8209;&#8209;</span>
+                                </div>
+                                <div class="schedule-time">
+                                    <span class="schedule-time-label">Erwartet</span>
+                                    <span class="schedule-time-value">&#8209;&#8209;:&#8209;&#8209;</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flight-details">
+                        <div class="flight-detail">
+                            <div class="flight-detail-label">Höhe</div>
+                            <div class="flight-detail-value">&#8209; ft</div>
+                        </div>
+                        <div class="flight-detail">
+                            <div class="flight-detail-label">Geschwindigkeit</div>
+                            <div class="flight-detail-value">&#8209; kts</div>
+                        </div>
+                        <div class="flight-detail">
+                            <div class="flight-detail-label">Entfernung</div>
+                            <div class="flight-detail-value">&#8209; km</div>
+                        </div>
+                    </div>
+                    <div class="flight-airline">
+                        <div class="airline-section">
+                            <div class="airline-logo">
+                                <img src="https://images.kiwi.com/airlines/64/non-existing.png" alt="Croatia Airlines"
+                                    onerror="this.parentElement.innerHTML='N/A'">
+                            </div>
+                            <div class="airline-info">
+                                <div class="airline-name"></div>
+                                <div class="aircraft-type"></div>
+                            </div>
+                        </div>
+                        <div class="aircraft-image-container">
+                        </div>
+                    </div>
+                </div>
+                <!-- Flight # -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentIndex = 0;
+        const wrapper = document.getElementById('flightCarouselWrapper');
+        const indicatorsContainer = document.getElementById('nav-indicators');
+        // Funktion zum Initialisieren/Aktualisieren des Carousels
+        // Nach dem Update der Cards einfach initializeCarousel() aufrufen
+        function initializeCarousel() {
+            const slides = document.querySelectorAll('.flight-carousel-slide');
+            const totalSlides = slides.length;
+
+            // Lösche alle existierenden Indikatoren
+            indicatorsContainer.innerHTML = '';
+
+            // Erstelle neue Indikatoren
+            for (let i = 0; i < totalSlides; i++) {
+                const indicator = document.createElement('div');
+                indicator.className = 'nav-indicator' + (i === currentIndex ? ' active' : '');
+                indicator.onclick = () => goToSlide(i);
+                indicatorsContainer.appendChild(indicator);
+            }
+
+            // Stelle sicher, dass currentIndex nicht außerhalb des gültigen Bereichs liegt
+            if (currentIndex >= totalSlides) {
+                currentIndex = Math.max(0, totalSlides - 1);
+            }
+
+            // Aktualisiere Carousel-Position
+            if (totalSlides > 0) {
+                wrapper.style.transform = `translateX(-${currentIndex * 100}%)`;
+            }
+        }
+
+        // Initialisiere beim Laden
+        initializeCarousel();
+
+        function nextCard() {
+            const totalSlides = document.querySelectorAll('.flight-carousel-slide').length;
+            currentIndex = (currentIndex + 1) % totalSlides;
+            initializeCarousel();
+        }
+
+        function prevCard() {
+            const totalSlides = document.querySelectorAll('.flight-carousel-slide').length;
+            currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+            initializeCarousel();
+        }
+
+        function goToSlide(index) {
+            currentIndex = index;
+            updateCarousel();
+        }
+
+        // Tastatur-Navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') prevCard();
+            if (e.key === 'ArrowRight') nextCard();
+        });
+
+        // Touch-Navigation
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        wrapper.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        wrapper.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            if (touchEndX < touchStartX - 50) nextCard();
+            if (touchEndX > touchStartX + 50) prevCard();
+        }
+        // Hier werden die Daten vom Modul verarbeitet.
+        function handleMessage(data) {
+            //console.log('Rohdaten empfangen:', data);
+            const decodedData = JSON.parse(data);
+            //console.log('Decodierte Daten:', decodedData);
+            var root = document.documentElement;
+            for (const parameter in decodedData) {
+                console.log('Parameter:', parameter, 'Wert:', decodedData[parameter]);
+                switch (parameter) {
+                    case 'flights':
+                        updateFlights(decodedData[parameter]);
+                        break;
+                    default:
+                        console.log('Unbekannter Parameter:', parameter);
+                        break;
+                }
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function formatDistance(distance) {
+            if (distance < 1) {
+                return (distance * 1000).toFixed(0) + ' m';
+            }
+            return distance.toFixed(1) + ' km';
+        }
+
+        function formatTime(time, text='') {
+            if (time !== 'N/A') {
+                return new Date(time * 1000).toLocaleTimeString('de-DE', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                    });
+            }
+            if(text !== '') {
+                const tt = text.split(" ")[1];
+                return tt;
+            }
+            return '&#8209;&#8209;:&#8209;&#8209;';
+        }
+
+        function updateFlights(flights) {
+            // Try to get real data from IPS variable
+            if (!Array.isArray(flights) || flights.length === 0) {
+                console.log('No flight data available)');
+                return;
+            }
+            console.log('Flight data available:', flights.length);
+
+            let html = '';
+
+            for (const flight of flights) {
+                const callsign = flight.callsign || flight.flight;
+
+                // Map status to color
+                let statusColor = flight.status.icon;
+                let statusState = 'unterwegs';
+                if (flight.status.state === 'on-ground') {
+                    statusState = 'gelandet';
+                }
+                html += `
+            <div class="flight-carousel-slide">
+                <div class="flight-card">
+                    <div class="flight-header">
+                        <div>
+                            <div class="flight-number">${escapeHtml(flight.flight)}</div>
+                            <div class="flight-callsign">${escapeHtml(callsign)}</div>
+                        </div>
+                        <div class="flight-status ${statusColor}">${statusState}</div>
+                    </div>
+                    <div class="flight-route">
+                        <img src="https://flagsapi.com/${flight.departure.flag}/flat/24.png" onerror="this.style.display='none'">
+                        ${escapeHtml(flight.departure.city)}
+                        <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"
+                            class="flight-arrow">
+                            <path
+                                d="m 6.496094 1 c -0.792969 0 -0.78125 0.035156 -0.53125 1.03125 l 1.625 4.96875 h -4.5 l -1.21875 -1.78125 c -0.140625 -0.207031 -0.121094 -0.21875 -0.34375 -0.21875 h -0.21875 c -0.425782 0 -0.28125 0.4375 -0.28125 0.4375 l 0.28125 2.5625 l -0.28125 2.5625 s -0.140625 0.4375 0.25 0.4375 h 0.25 c 0.210937 0 0.203125 -0.007812 0.34375 -0.21875 l 1.21875 -1.78125 h 4.5 l -1.625 4.9375 c -0.261719 1.046875 -0.265625 1.0625 0.53125 1.0625 c 0.433594 0 0.433594 -0.011719 0.71875 -0.5 l 3.6875 -5.5 h 3.09375 c 0.554687 0 1 -0.445312 1 -1 s -0.445313 -1 -1 -1 h -3.09375 l -3.6875 -5.5 c -0.265625 -0.457031 -0.28125 -0.5 -0.65625 -0.5 z m 0 0">
+                            </path>
+                        </svg>
+                        <img src="https://flagsapi.com/${flight.arrival.flag}/flat/24.png" onerror="this.style.display='none'">
+                        ${escapeHtml(flight.arrival.city)}
+                    </div>
+                    <div class="flight-schedule">
+                        <div class="schedule-box">
+                            <div class="schedule-icon">
+                                <svg viewBox="0 -64 640 640" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M624 448H16c-8.84 0-16 7.16-16 16v32c0 8.84 7.16 16 16 16h608c8.84 0 16-7.16 16-16v-32c0-8.84-7.16-16-16-16zM80.55 341.27c6.28 6.84 15.1 10.72 24.33 10.71l130.54-.18a65.62 65.62 0 0 0 29.64-7.12l290.96-147.65c26.74-13.57 50.71-32.94 67.02-58.31 18.31-28.48 20.3-49.09 13.07-63.65-7.21-14.57-24.74-25.27-58.25-27.45-29.85-1.94-59.54 5.92-86.28 19.48l-98.51 49.99-218.7-82.06a17.799 17.799 0 0 0-18-1.11L90.62 67.29c-10.67 5.41-13.25 19.65-5.17 28.53l156.22 98.1-103.21 52.38-72.35-36.47a17.804 17.804 0 0 0-16.07.02L9.91 230.22c-10.44 5.3-13.19 19.12-5.57 28.08l76.21 82.97z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <div class="schedule-times">
+                                <div class="schedule-time">
+                                    <span class="schedule-time-label">Geplant</span>
+                                    <span class="schedule-time-value">${formatTime(flight.scheduled.departure)}</span>
+                                </div>
+                                <div class="schedule-time">
+                                    <span class="schedule-time-label">Erwartet</span>
+                                    <span class="schedule-time-value">${formatTime(flight.estimated.departure)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="schedule-box arrival">
+                            <div class="schedule-icon">
+                                <svg viewBox="0 -64 640 640" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M624 448H16c-8.84 0-16 7.16-16 16v32c0 8.84 7.16 16 16 16h608c8.84 0 16-7.16 16-16v-32c0-8.84-7.16-16-16-16zM44.81 205.66l88.74 80a62.607 62.607 0 0 0 25.47 13.93l287.6 78.35c26.48 7.21 54.56 8.72 81 1.36 29.67-8.27 43.44-21.21 47.25-35.71 3.83-14.5-1.73-32.71-23.37-54.96-19.28-19.82-44.35-32.79-70.83-40l-97.51-26.56L282.8 30.22c-1.51-5.81-5.95-10.35-11.66-11.91L206.05.58c-10.56-2.88-20.9 5.32-20.71 16.44l47.92 164.21-102.2-27.84-27.59-67.88c-1.93-4.89-6.01-8.57-11.02-9.93L52.72 64.75c-10.34-2.82-20.53 5-20.72 15.88l.23 101.78c.19 8.91 6.03 17.34 12.58 23.25z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <div class="schedule-times">
+                                <div class="schedule-time">
+                                    <span class="schedule-time-label">Geplant</span>
+                                    <span class="schedule-time-value">${formatTime(flight.scheduled.arrival)}</span>
+                                </div>
+                                <div class="schedule-time">
+                                    <span class="schedule-time-label">Erwartet</span>
+                                    <span class="schedule-time-value">${formatTime(flight.estimated.arrival, flight.status.text)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flight-details">
+                        <div class="flight-detail">
+                            <div class="flight-detail-label">Höhe</div>
+                            <div class="flight-detail-value">${formatNumber(flight.altitude)} ft</div>
+                        </div>
+                        <div class="flight-detail">
+                            <div class="flight-detail-label">Geschwindigkeit</div>
+                            <div class="flight-detail-value">${formatNumber(flight.speed)} kts</div>
+                        </div>
+                        <div class="flight-detail">
+                            <div class="flight-detail-label">Entfernung</div>
+                            <div class="flight-detail-value">${formatDistance(flight.distance)}</div>
+                        </div>
+                    </div>
+                    <div class="flight-airline">
+                        <div class="airline-section">
+                            <div class="airline-logo">
+                                <img src="https://images.kiwi.com/airlines/64/${flight.airline.iata}.png" alt="${escapeHtml(flight.airline.short)}"
+                                    onerror="this.parentElement.innerHTML='N/A'">
+                            </div>
+                            <div class="airline-info">
+                                <div class="airline-name">${escapeHtml(flight.airline.name)}</div>
+                                <div class="aircraft-type">${escapeHtml(flight.aircraft.model)} • ${escapeHtml(flight.aircraft.registration)}</div>
+                            </div>
+                        </div>
+                        <div class="aircraft-image-container">
+                            <img src="${flight.aircraft.image}" alt="Aircraft" class="aircraft-image" onerror="this.style.display='none'">
+                        </div>
+                    </div>
+                </div>
+            </div>
+                `;
+            }
+            document.getElementById('flightCarouselWrapper').innerHTML = html;
+            initializeCarousel()
+        }
+
+    </script>
+</body>
+
+</html>

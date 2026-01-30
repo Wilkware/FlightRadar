@@ -1,0 +1,19 @@
+{
+    "translations": {
+        "de": {
+            "Flight Radar": "Flugradar",
+            "This module provides incoming and outgoing flights for a configured airport.": "Dieses Modul stellt ankommende und abfliegende Flüge eines konfigurierten Flughafens bereit.",
+            "✈️ Flight data ...": "✈️ Flugdaten ...",
+            "⏱️ Time control ...": "⏱️ Zeitsteuerung ...",
+            "Expiry time:": "Ablaufzeit:",
+            "Minutes": "Minuten",
+            "Current flights will be automatically removed after the set time.": "Aktuelle Flüge werden nach der eingestellten Zeit automatisch entfernt.",
+            "Flight Tracker is being created.": "Flugverfolgung wird erstellt.",
+            "Flight Tracker is active.": "Flugverfolgung ist aktiv",
+            "Flight Tracker is inactive.": "Flugverfolgung ist inaktiv.",
+            "MQTT settings incorrect.": "MQTT Einstellungen fehlerhaft.",
+            "🎗️ Source code, donation and licence ...": "🎗️ Quellcode, Spende und Lizenz ...",
+            "The software is free of charge for non-commercial use, I would appreciate a donation if you like the module.": "Die Software ist für die nicht kommerzielle Nutzung kostenlos, über eine Spende bei Gefallen des Moduls würde ich mich sehr freuen."
+        }
+    }
+}
