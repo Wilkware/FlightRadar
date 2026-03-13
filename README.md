@@ -50,7 +50,9 @@ Einstellungsbereich:
 Name                        | Beschreibung
 --------------------------- | ----------------------------------
 MQTT Base Topic             | Ist das grundlegende Themenpräfix, unter dem alle spezifischen Subtopics für Nachrichten in einem MQTT-System organisiert werden. Standardmäßig ist der Präfix auf _'flights'_ vorbelegt.
-MQTT Topic                  | Ist der eindeutige Pfad, der zum Veröffentlichen und Abonnieren von Nachrichten verwendet wird. __HINWEIS:__ Immer in Kleinbuchstaben angeben!
+MQTT Topic                  | Ist der eindeutige Pfad, der zum Veröffentlichen und Abonnieren von Nachrichten verwendet wird.
+
+__HINWEIS:__ Immer in Kleinbuchstaben angeben!
 
 > ⏱️ Zeitsteuerung ...
 
