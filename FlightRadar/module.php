@@ -2,18 +2,35 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../libs/_traits.php';  // Generell funktions
+/** Generell funktions */
+require_once __DIR__ . '/../libs/_traits.php';
 
-// CLASS FlightRadar
+/** Namespaced traits */
+use Wilkware\FlightRadar\DebugHelper;
+use Wilkware\FlightRadar\FormatHelper;
+
+/**
+ *  CLASS FlightRadar
+ */
 class FlightRadar extends IPSModuleStrict
 {
+    // -------------------------------------------------------------------------
+    // Traits
+    // -------------------------------------------------------------------------
+
     use DebugHelper;
     use FormatHelper;
 
-    /**
-     * @var string MQTT Splitter Modul ID
-     */
-    private const GUID_MQTT_IO = '{C6D2AEB3-6E1F-4B2E-8E69-3A1A00246850}';  // Splitter
+    // -------------------------------------------------------------------------
+    // Constants
+    // -------------------------------------------------------------------------
+
+    /** @var string MQTT Splitter Modul ID */
+    private const GUID_MQTT_IO = '{C6D2AEB3-6E1F-4B2E-8E69-3A1A00246850}';
+
+    // -------------------------------------------------------------------------
+    // Methods
+    // -------------------------------------------------------------------------
 
     /**
      * In contrast to Construct, this function is called only once when creating the instance and starting IP-Symcon.

@@ -8,6 +8,8 @@
 
 Das Modul empfängt Flugdaten über MQTT vom Service [flights2mqtt](https://github.com/Wilkware/flights2mqtt) und stellt sie in der TileVisu übersichtlich dar.
 
+![Module-Visu](imgs/flight-radar.png)
+
 ## Inhaltverzeichnis
 
 1. [Funktionsumfang](#user-content-1-funktionsumfang)
